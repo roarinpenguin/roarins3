@@ -12,6 +12,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { apiKeys, buckets } from '../api';
+import { copyToClipboard } from '../utils/clipboard';
 
 export default function ApiKeys() {
   const [keyList, setKeyList] = useState([]);
@@ -82,10 +83,12 @@ export default function ApiKeys() {
     }
   };
 
-  const copyToClipboard = (text, field) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
+  const handleCopy = async (text, field) => {
+    const success = await copyToClipboard(text);
+    if (success) {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
   };
 
   const togglePermission = (bucketName) => {
@@ -178,7 +181,7 @@ export default function ApiKeys() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => copyToClipboard(key.access_key, `access-${key.id}`)}
+                    onClick={() => handleCopy(key.access_key, `access-${key.id}`)}
                     className="p-2 rounded-lg hover:bg-purple-500/20 text-purple-300"
                     title="Copy Access Key"
                   >
@@ -317,7 +320,7 @@ export default function ApiKeys() {
                     className="input-glass flex-1 px-4 py-3 rounded-xl text-white font-mono text-sm"
                   />
                   <button
-                    onClick={() => copyToClipboard(createdKey.access_key, 'new-access')}
+                    onClick={() => handleCopy(createdKey.access_key, 'new-access')}
                     className="p-3 rounded-xl hover:bg-purple-500/20 text-purple-300"
                   >
                     {copiedField === 'new-access' ? (
@@ -340,7 +343,7 @@ export default function ApiKeys() {
                     className="input-glass flex-1 px-4 py-3 rounded-xl text-white font-mono text-sm"
                   />
                   <button
-                    onClick={() => copyToClipboard(createdKey.secret_key, 'new-secret')}
+                    onClick={() => handleCopy(createdKey.secret_key, 'new-secret')}
                     className="p-3 rounded-xl hover:bg-purple-500/20 text-purple-300"
                   >
                     {copiedField === 'new-secret' ? (

@@ -102,7 +102,8 @@ async def get_bucket(
         objects = minio_service.list_objects(bucket.name)
         response.object_count = len(objects)
         response.current_size = sum(o["size"] for o in objects if not o["is_dir"])
-    except:
+    except Exception as e:
+        print(f"Error getting bucket stats for {bucket.name}: {e}")
         response.object_count = 0
         response.current_size = 0
     

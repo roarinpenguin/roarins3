@@ -33,29 +33,38 @@ class AuditLogger:
         success: bool = True,
         error_message: Optional[str] = None,
         extra_data: Optional[dict] = None
-    ) -> AuditLog:
-        log_entry = AuditLog(
-            timestamp=datetime.utcnow(),
-            operation=operation,
-            bucket_name=bucket_name,
-            object_key=object_key,
-            api_key_id=api_key_id,
-            client_ip=client_ip,
-            user_agent=user_agent,
-            request_size=request_size,
-            response_size=response_size,
-            duration_ms=duration_ms or self.get_duration_ms(),
-            status_code=status_code,
-            success=success,
-            error_message=error_message,
-            extra_data=extra_data
-        )
-        
-        db.add(log_entry)
-        await db.commit()
-        await db.refresh(log_entry)
-        
-        return log_entry
+    ) -> Optional[AuditLog]:
+        try:
+            log_entry = AuditLog(
+                timestamp=datetime.utcnow(),
+                operation=operation,
+                bucket_name=bucket_name,
+                object_key=object_key,
+                api_key_id=api_key_id,
+                client_ip=client_ip,
+                user_agent=user_agent,
+                request_size=request_size,
+                response_size=response_size,
+                duration_ms=duration_ms or self.get_duration_ms(),
+                status_code=status_code,
+                success=success,
+                error_message=error_message,
+                extra_data=extra_data
+            )
+            
+            db.add(log_entry)
+            await db.commit()
+            await db.refresh(log_entry)
+            
+            return log_entry
+        except Exception as e:
+            print(f"Audit log error: {e}")
+            # Don't let audit logging break the main operation
+            try:
+                await db.rollback()
+            except:
+                pass
+            return None
 
 
 def get_client_ip(request) -> str:

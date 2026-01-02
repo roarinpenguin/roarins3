@@ -38,7 +38,7 @@ async def list_objects(
     try:
         objects = minio_service.list_objects(bucket_name, prefix=prefix)
         
-        # Log the operation
+        # Log the operation (non-blocking)
         await audit.log(
             db=db,
             operation="LIST",
@@ -53,6 +53,7 @@ async def list_objects(
         
         return [ObjectInfo(**obj) for obj in objects]
     except Exception as e:
+        print(f"Error listing objects in {bucket_name}: {e}")
         await audit.log(
             db=db,
             operation="LIST",

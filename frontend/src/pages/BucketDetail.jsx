@@ -14,6 +14,7 @@ import {
   Terminal,
 } from 'lucide-react';
 import { buckets, objects } from '../api';
+import { copyToClipboard } from '../utils/clipboard';
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
@@ -43,8 +44,8 @@ export default function BucketDetail() {
 
   const s3Endpoint = `${window.location.protocol}//${window.location.hostname}:9000`;
   
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = async (text) => {
+    await copyToClipboard(text);
   };
 
   useEffect(() => {
@@ -190,7 +191,7 @@ export default function BucketDetail() {
                     {s3Endpoint}
                   </code>
                   <button
-                    onClick={() => copyToClipboard(s3Endpoint)}
+                    onClick={() => handleCopy(s3Endpoint)}
                     className="p-2 rounded-lg hover:bg-purple-500/20 text-purple-300"
                     title="Copy"
                   >
@@ -206,7 +207,7 @@ export default function BucketDetail() {
                     {s3Endpoint}/{bucketName}
                   </code>
                   <button
-                    onClick={() => copyToClipboard(`${s3Endpoint}/${bucketName}`)}
+                    onClick={() => handleCopy(`${s3Endpoint}/${bucketName}`)}
                     className="p-2 rounded-lg hover:bg-purple-500/20 text-purple-300"
                     title="Copy"
                   >

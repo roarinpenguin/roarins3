@@ -10,6 +10,7 @@ import {
   Code,
 } from 'lucide-react';
 import { logTokens } from '../api';
+import { copyToClipboard } from '../utils/clipboard';
 
 function formatDate(dateStr) {
   if (!dateStr) return 'Never';
@@ -77,10 +78,12 @@ export default function LogTokens() {
     }
   };
 
-  const copyToClipboard = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedToken(id);
-    setTimeout(() => setCopiedToken(null), 2000);
+  const handleCopy = async (text, id) => {
+    const success = await copyToClipboard(text);
+    if (success) {
+      setCopiedToken(id);
+      setTimeout(() => setCopiedToken(null), 2000);
+    }
   };
 
   const getUsageExample = (token) => {
@@ -180,7 +183,7 @@ print(f"Retrieved {logs['total_returned']} logs")`;
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => copyToClipboard(token.token, token.id)}
+                    onClick={() => handleCopy(token.token, token.id)}
                     className="p-2 rounded-lg hover:bg-purple-500/20 text-purple-300"
                     title="Copy Token"
                   >
@@ -304,7 +307,7 @@ print(f"Retrieved {logs['total_returned']} logs")`;
                   className="input-glass flex-1 px-4 py-3 rounded-xl text-white font-mono text-sm"
                 />
                 <button
-                  onClick={() => copyToClipboard(createdToken.token, 'new-token')}
+                  onClick={() => handleCopy(createdToken.token, 'new-token')}
                   className="p-3 rounded-xl hover:bg-purple-500/20 text-purple-300"
                 >
                   {copiedToken === 'new-token' ? (
