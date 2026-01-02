@@ -24,13 +24,19 @@ cd roarins3
 docker-compose up -d
 
 # Access the UI
-open http://localhost
+open http://localhost:8080
 ```
 
-### Default Credentials
+### First-Time Setup
 
-- **Admin UI**: `admin` / `admin`
-- **MinIO S3**: `minioadmin` / `minioadmin`
+On first access, you'll see a **Setup Wizard** to configure:
+
+- **Admin credentials** - Username and password for the management UI
+- **MinIO credentials** - Username and password for S3 storage (min 8 chars)
+- **JWT Secret** - For secure session tokens (use the generate button)
+- **Log API Token** - Optional, for external log pulling
+
+No default credentials are set - you configure everything on first run.
 
 ## Architecture
 
@@ -57,7 +63,7 @@ open http://localhost
 
 | Port | Service | Description |
 |------|---------|-------------|
-| 80 | Nginx | Web UI and Management API |
+| 8080 | Nginx | Web UI and Management API |
 | 9000 | MinIO | S3-compatible API endpoint |
 | 9001 | MinIO Console | MinIO's native admin UI (optional) |
 
@@ -96,10 +102,10 @@ External systems can pull audit logs using tokens:
 
 ```bash
 # Create a token via the UI, then:
-curl "http://localhost/api/pull?token=YOUR_TOKEN"
+curl "http://localhost:8080/api/pull?token=YOUR_TOKEN"
 
 # With filters
-curl "http://localhost/api/pull?token=YOUR_TOKEN&operation=PUT&bucket_name=my-bucket"
+curl "http://localhost:8080/api/pull?token=YOUR_TOKEN&operation=PUT&bucket_name=my-bucket"
 ```
 
 ### Response Format
@@ -159,13 +165,27 @@ Then run backend and frontend as above.
 ## API Documentation
 
 Once running, access the OpenAPI documentation at:
-- Swagger UI: http://localhost/docs
-- OpenAPI JSON: http://localhost/openapi.json
+- Swagger UI: http://localhost:8080/docs
+- OpenAPI JSON: http://localhost:8080/openapi.json
+
+## Resetting the System
+
+If you forget your password or need to reconfigure:
+
+```bash
+# Reset config only (keeps data)
+docker exec roarins3 rm -f /data/config/roarins3.json
+docker-compose restart
+
+# Full reset (deletes all data)
+docker-compose down -v
+docker-compose up -d
+```
 
 ## Security Notes
 
-1. **Change default passwords** before production use
-2. **Set a strong `ROARINS3_SECRET_KEY`** for JWT signing
+1. **Configure strong passwords** during initial setup
+2. **Use the generated JWT secret** or create a strong one
 3. **Use HTTPS** in production (configure nginx or use a reverse proxy)
 4. **Restrict network access** to ports 9000/9001 if not needed externally
 
