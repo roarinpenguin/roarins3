@@ -7,11 +7,7 @@ export default function Setup({ onSetupComplete }) {
     admin_username: 'admin',
     admin_password: '',
     admin_password_confirm: '',
-    minio_username: 'minioadmin',
-    minio_password: '',
     jwt_secret: '',
-    log_api_token: '',
-    ui_port: 8080,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,12 +53,6 @@ export default function Setup({ onSetupComplete }) {
       return;
     }
 
-    if (formData.minio_password.length < 8) {
-      setError('MinIO password must be at least 8 characters');
-      setLoading(false);
-      return;
-    }
-
     if (!formData.jwt_secret) {
       setError('JWT Secret is required');
       setLoading(false);
@@ -73,11 +63,7 @@ export default function Setup({ onSetupComplete }) {
       const response = await api.post('/setup/initialize', {
         admin_username: formData.admin_username,
         admin_password: formData.admin_password,
-        minio_username: formData.minio_username,
-        minio_password: formData.minio_password,
         jwt_secret: formData.jwt_secret,
-        log_api_token: formData.log_api_token || null,
-        ui_port: formData.ui_port,
       });
       
       setResult(response.data);
@@ -104,22 +90,7 @@ export default function Setup({ onSetupComplete }) {
           <h1 className="text-2xl font-bold text-white mb-4">Setup Complete!</h1>
           <p className="text-purple-200 mb-6">{result.message}</p>
           
-          {result.requires_restart ? (
-            <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-2 text-yellow-400 mb-2">
-                <AlertTriangle size={20} />
-                <span className="font-semibold">Restart Required</span>
-              </div>
-              <p className="text-yellow-200 text-sm">
-                MinIO credentials have changed. Please restart the container:
-              </p>
-              <code className="block mt-2 p-2 bg-black/30 rounded text-xs text-yellow-100">
-                docker-compose restart
-              </code>
-            </div>
-          ) : (
-            <p className="text-purple-300">Redirecting to login...</p>
-          )}
+          <p className="text-purple-300">Redirecting to login...</p>
         </div>
       </div>
     );
@@ -190,43 +161,6 @@ export default function Setup({ onSetupComplete }) {
             </div>
           </div>
 
-          {/* MinIO Credentials */}
-          <div className="border border-purple-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-purple-300 mb-4">
-              <Server size={20} />
-              <h2 className="font-semibold">MinIO Storage Credentials</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-purple-200 mb-1">
-                  MinIO Username
-                </label>
-                <input
-                  type="text"
-                  name="minio_username"
-                  value={formData.minio_username}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-200 mb-1">
-                  MinIO Password (min 8 chars)
-                </label>
-                <input
-                  type="password"
-                  name="minio_password"
-                  value={formData.minio_password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                  required
-                  minLength={8}
-                />
-              </div>
-            </div>
-          </div>
-
           {/* API Security */}
           <div className="border border-purple-500/20 rounded-xl p-4">
             <div className="flex items-center gap-2 text-purple-300 mb-4">
@@ -257,52 +191,6 @@ export default function Setup({ onSetupComplete }) {
                   </button>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-200 mb-1">
-                  Log API Token (optional - for external log pulling)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    name="log_api_token"
-                    value={formData.log_api_token}
-                    onChange={handleChange}
-                    className="flex-1 px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 font-mono text-sm"
-                    placeholder="Leave empty to skip"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleGenerateLogToken}
-                    className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-all"
-                    title="Generate random token"
-                  >
-                    <RefreshCw size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Port Configuration */}
-          <div className="border border-purple-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-purple-300 mb-4">
-              <Server size={20} />
-              <h2 className="font-semibold">Network Configuration</h2>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-purple-200 mb-1">
-                UI Port (reference only - change in docker-compose.yml)
-              </label>
-              <input
-                type="number"
-                name="ui_port"
-                value={formData.ui_port}
-                onChange={handleChange}
-                className="w-32 px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
-              />
-              <p className="text-xs text-purple-400 mt-1">
-                To change the actual port, modify docker-compose.yml and restart
-              </p>
             </div>
           </div>
 

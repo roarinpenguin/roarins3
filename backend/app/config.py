@@ -1,12 +1,13 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import os
 
 
 class Settings(BaseSettings):
-    # MinIO Configuration
+    # MinIO Configuration - read from MINIO_ env vars (same as MinIO server uses)
     minio_endpoint: str = "localhost:9000"
-    minio_access_key: str = "minioadmin"
-    minio_secret_key: str = "minioadmin"
+    minio_access_key: str = ""
+    minio_secret_key: str = ""
     minio_secure: bool = False
     
     # API Configuration
@@ -27,4 +28,10 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    # Use same credentials as MinIO server
+    if not settings.minio_access_key:
+        settings.minio_access_key = os.environ.get('MINIO_ROOT_USER', 'minioadmin')
+    if not settings.minio_secret_key:
+        settings.minio_secret_key = os.environ.get('MINIO_ROOT_PASSWORD', 'minioadmin')
+    return settings

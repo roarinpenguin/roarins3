@@ -37,14 +37,38 @@ class MinioService:
     def delete_bucket(self, bucket_name: str, force: bool = False) -> bool:
         try:
             if force:
-                # Delete all objects first
-                objects = self.client.list_objects(bucket_name, recursive=True)
-                for obj in objects:
-                    self.client.remove_object(bucket_name, obj.object_name)
+                # Delete all objects and their versions
+                from minio.deleteobjects import DeleteObject
+                
+                # First delete all object versions (including delete markers)
+                objects_to_delete = []
+                try:
+                    objects = self.client.list_objects(
+                        bucket_name, 
+                        recursive=True,
+                        include_version=True
+                    )
+                    for obj in objects:
+                        objects_to_delete.append(
+                            DeleteObject(obj.object_name, obj.version_id)
+                        )
+                except Exception:
+                    # Fallback for non-versioned or if include_version fails
+                    objects = self.client.list_objects(bucket_name, recursive=True)
+                    for obj in objects:
+                        objects_to_delete.append(DeleteObject(obj.object_name))
+                
+                # Batch delete
+                if objects_to_delete:
+                    errors = list(self.client.remove_objects(bucket_name, objects_to_delete))
+                    if errors:
+                        for err in errors:
+                            print(f"Delete error: {err}")
+            
             self.client.remove_bucket(bucket_name)
             return True
         except S3Error as e:
-            raise Exception(f"Failed to delete bucket: {e}")
+            raise Exception(f"S3 operation failed; code: {e.code}, message: {e.message}")
     
     def list_buckets(self) -> List[dict]:
         try:

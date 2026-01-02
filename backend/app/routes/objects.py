@@ -48,7 +48,7 @@ async def list_objects(
             user_agent=get_user_agent(request) if request else None,
             status_code=200,
             success=True,
-            metadata={"count": len(objects)}
+            extra_data={"count": len(objects)}
         )
         
         return [ObjectInfo(**obj) for obj in objects]
@@ -123,7 +123,7 @@ async def upload_object(
             request_size=content_length,
             status_code=201,
             success=True,
-            metadata={"etag": result["etag"], "content_type": file.content_type}
+            extra_data={"etag": result["etag"], "content_type": file.content_type}
         )
         
         return ObjectUploadResponse(**result)

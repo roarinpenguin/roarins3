@@ -19,11 +19,7 @@ CONFIG_FILE = Path("/data/config/roarins3.json")
 class SetupRequest(BaseModel):
     admin_username: str
     admin_password: str
-    minio_username: str
-    minio_password: str
     jwt_secret: str
-    log_api_token: Optional[str] = None
-    ui_port: int = 8080
 
 
 class SetupStatus(BaseModel):
@@ -86,12 +82,6 @@ async def initialize_system(
             detail="Admin password must be at least 4 characters"
         )
     
-    if len(request.minio_password) < 8:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="MinIO password must be at least 8 characters"
-        )
-    
     # Check if admin already exists
     result = await db.execute(
         select(AdminUser).where(AdminUser.username == request.admin_username)
@@ -111,44 +101,18 @@ async def initialize_system(
     
     await db.commit()
     
-    # Check if MinIO credentials or port changed (requires restart)
-    current_minio_user = os.environ.get('MINIO_ROOT_USER', 'minioadmin')
-    current_minio_pass = os.environ.get('MINIO_ROOT_PASSWORD', 'minioadmin')
-    
-    requires_restart = (
-        request.minio_username != current_minio_user or
-        request.minio_password != current_minio_pass
-    )
-    
     # Save configuration
     config = {
         'setup_complete': True,
         'admin_username': request.admin_username,
-        'minio_username': request.minio_username,
-        'minio_password': request.minio_password,
         'jwt_secret': request.jwt_secret,
-        'log_api_token': request.log_api_token,
-        'ui_port': request.ui_port,
     }
     save_config(config)
     
-    # Write environment file for container restart
-    env_file = Path("/data/config/.env")
-    with open(env_file, 'w') as f:
-        f.write(f"MINIO_ROOT_USER={request.minio_username}\n")
-        f.write(f"MINIO_ROOT_PASSWORD={request.minio_password}\n")
-        f.write(f"ROARINS3_SECRET_KEY={request.jwt_secret}\n")
-        if request.log_api_token:
-            f.write(f"ROARINS3_LOG_API_TOKEN={request.log_api_token}\n")
-    
-    message = "Setup complete!"
-    if requires_restart:
-        message += " Container restart required for MinIO credential changes to take effect."
-    
     return SetupStatus(
         is_configured=True,
-        requires_restart=requires_restart,
-        message=message
+        requires_restart=False,
+        message="Setup complete! You can now login with your admin credentials."
     )
 
 

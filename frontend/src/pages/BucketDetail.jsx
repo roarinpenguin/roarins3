@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Search,
   X,
+  Copy,
+  Terminal,
 } from 'lucide-react';
 import { buckets, objects } from '../api';
 
@@ -37,6 +39,13 @@ export default function BucketDetail() {
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showS3Info, setShowS3Info] = useState(false);
+
+  const s3Endpoint = `${window.location.protocol}//${window.location.hostname}:9000`;
+  
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+  };
 
   useEffect(() => {
     loadData();
@@ -160,6 +169,74 @@ export default function BucketDetail() {
               {formatDate(bucket?.created_at)}
             </p>
           </div>
+        </div>
+        
+        {/* S3 Access Toggle */}
+        <div className="mt-4 pt-4 border-t border-purple-500/20">
+          <button
+            onClick={() => setShowS3Info(!showS3Info)}
+            className="flex items-center gap-2 text-purple-300 hover:text-purple-200"
+          >
+            <Terminal size={18} />
+            {showS3Info ? 'Hide' : 'Show'} S3 Access Info
+          </button>
+          
+          {showS3Info && (
+            <div className="mt-4 space-y-4">
+              <div>
+                <p className="text-purple-400 text-sm mb-1">S3 Endpoint URL</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-black/30 px-3 py-2 rounded-lg text-purple-100 text-sm font-mono">
+                    {s3Endpoint}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(s3Endpoint)}
+                    className="p-2 rounded-lg hover:bg-purple-500/20 text-purple-300"
+                    title="Copy"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-purple-400 text-sm mb-1">Bucket URL</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-black/30 px-3 py-2 rounded-lg text-purple-100 text-sm font-mono">
+                    {s3Endpoint}/{bucketName}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(`${s3Endpoint}/${bucketName}`)}
+                    className="p-2 rounded-lg hover:bg-purple-500/20 text-purple-300"
+                    title="Copy"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-purple-400 text-sm mb-2">Example Commands (AWS CLI)</p>
+                <div className="space-y-2 text-xs font-mono">
+                  <div className="bg-black/30 p-3 rounded-lg">
+                    <p className="text-purple-400 mb-1"># List objects</p>
+                    <p className="text-purple-100">aws --endpoint-url {s3Endpoint} s3 ls s3://{bucketName}/</p>
+                  </div>
+                  <div className="bg-black/30 p-3 rounded-lg">
+                    <p className="text-purple-400 mb-1"># Upload file</p>
+                    <p className="text-purple-100">aws --endpoint-url {s3Endpoint} s3 cp myfile.txt s3://{bucketName}/</p>
+                  </div>
+                  <div className="bg-black/30 p-3 rounded-lg">
+                    <p className="text-purple-400 mb-1"># Download file</p>
+                    <p className="text-purple-100">aws --endpoint-url {s3Endpoint} s3 cp s3://{bucketName}/myfile.txt ./</p>
+                  </div>
+                </div>
+                <p className="text-purple-400 text-xs mt-2">
+                  Configure credentials first: aws configure (use MinIO access key and secret)
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
