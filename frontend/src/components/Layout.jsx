@@ -136,6 +136,13 @@ export default function Layout({ onLogout }) {
               Logout
             </button>
           </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-purple-500/20 text-center">
+            <p className="text-xs text-purple-400">
+              Crafted with <span className="text-purple-400">♡</span> by RoarinPenguin
+            </p>
+          </div>
         </div>
       </aside>
 
