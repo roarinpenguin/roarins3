@@ -5,17 +5,20 @@ from typing import Optional, List, BinaryIO
 from datetime import timedelta
 import io
 
-settings = get_settings()
-
-
 class MinioService:
-    def __init__(self):
-        self.client = Minio(
-            settings.minio_endpoint,
-            access_key=settings.minio_access_key,
-            secret_key=settings.minio_secret_key,
-            secure=settings.minio_secure
-        )
+    _client = None
+    
+    @property
+    def client(self):
+        if self._client is None:
+            settings = get_settings()
+            self._client = Minio(
+                settings.minio_endpoint,
+                access_key=settings.minio_access_key,
+                secret_key=settings.minio_secret_key,
+                secure=settings.minio_secure
+            )
+        return self._client
     
     def bucket_exists(self, bucket_name: str) -> bool:
         try:
