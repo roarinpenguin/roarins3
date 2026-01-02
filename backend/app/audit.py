@@ -34,6 +34,7 @@ class AuditLogger:
         error_message: Optional[str] = None,
         extra_data: Optional[dict] = None
     ) -> Optional[AuditLog]:
+        print(f"AUDIT: Attempting to log operation={operation}, bucket={bucket_name}, object={object_key}")
         try:
             log_entry = AuditLog(
                 timestamp=datetime.utcnow(),
@@ -56,9 +57,12 @@ class AuditLogger:
             await db.commit()
             await db.refresh(log_entry)
             
+            print(f"AUDIT: Successfully logged entry id={log_entry.id}")
             return log_entry
         except Exception as e:
-            print(f"Audit log error: {e}")
+            print(f"AUDIT ERROR: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             # Don't let audit logging break the main operation
             try:
                 await db.rollback()

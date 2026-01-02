@@ -22,7 +22,10 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
     echo "Downloading MinIO for architecture: ${ARCH}" && \
     wget -q https://dl.min.io/server/minio/release/linux-${ARCH}/minio -O /usr/local/bin/minio && \
     chmod +x /usr/local/bin/minio && \
-    /usr/local/bin/minio --version
+    /usr/local/bin/minio --version && \
+    wget -q https://dl.min.io/client/mc/release/linux-${ARCH}/mc -O /usr/local/bin/mc && \
+    chmod +x /usr/local/bin/mc && \
+    /usr/local/bin/mc --version
 
 WORKDIR /app
 
