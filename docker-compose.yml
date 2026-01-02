@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  roarins3:
+    build: .
+    container_name: roarins3
+    ports:
+      - "80:80"       # Web UI and API
+      - "9000:9000"   # MinIO S3 API
+      - "9001:9001"   # MinIO Console (optional)
+    volumes:
+      - roarins3_data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - ROARINS3_SECRET_KEY=change-this-in-production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  roarins3_data:
+    driver: local
