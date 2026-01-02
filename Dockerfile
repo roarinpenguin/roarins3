@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
-RUN mkdir -p /data/minio /data/db /var/log/supervisor
+RUN mkdir -p /data/minio /data/db /data/config /var/log/supervisor
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

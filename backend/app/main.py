@@ -1,17 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.database import init_db, async_session
-from app.auth import create_default_admin
-from app.routes import auth, buckets, api_keys, objects, logs, dashboard
+from app.database import init_db
+from app.routes import auth, buckets, api_keys, objects, logs, dashboard, setup
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
-    async with async_session() as db:
-        await create_default_admin(db)
     yield
     # Shutdown
 
@@ -33,6 +30,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(setup.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(buckets.router, prefix="/api")
