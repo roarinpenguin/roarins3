@@ -32,11 +32,16 @@ open http://localhost:8080
 On first access, you'll see a **Setup Wizard** to configure:
 
 - **Admin credentials** - Username and password for the management UI
-- **MinIO credentials** - Username and password for S3 storage (min 8 chars)
 - **JWT Secret** - For secure session tokens (use the generate button)
-- **Log API Token** - Optional, for external log pulling
 
-No default credentials are set - you configure everything on first run.
+MinIO credentials are set via environment variables in `docker-compose.yml` (default: `minioadmin/minioadmin`).
+
+### Accessing Buckets via S3
+
+Once you create a bucket, click **"Show S3 Access Info"** in the bucket detail page to see:
+- S3 endpoint URL
+- Bucket URL  
+- Example AWS CLI commands for upload/download
 
 ## Architecture
 
