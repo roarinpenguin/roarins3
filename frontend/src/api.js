@@ -29,6 +29,7 @@ api.interceptors.response.use(
 export const auth = {
   login: (username, password) => api.post('/auth/login', { username, password }),
   me: () => api.get('/auth/me'),
+  changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { current_password: currentPassword, new_password: newPassword }),
 };
 
 export const dashboard = {

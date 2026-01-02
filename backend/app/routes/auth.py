@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from app.database import get_db
@@ -43,22 +44,25 @@ async def get_me(current_user: AdminUser = Depends(get_current_user)):
     }
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 @router.post("/change-password", response_model=MessageResponse)
 async def change_password(
-    old_password: str,
-    new_password: str,
+    request: ChangePasswordRequest,
     current_user: AdminUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     from app.auth import verify_password
     
-    if not verify_password(old_password, current_user.password_hash):
+    if not verify_password(request.current_password, current_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect old password"
+            detail="Incorrect current password"
         )
     
-    current_user.password_hash = get_password_hash(new_password)
+    current_user.password_hash = get_password_hash(request.new_password)
     await db.commit()
     
     return MessageResponse(message="Password changed successfully")
