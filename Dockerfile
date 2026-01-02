@@ -18,8 +18,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://dl.min.io/server/minio/release/linux-amd64/minio -O /usr/local/bin/minio \
-    && chmod +x /usr/local/bin/minio
+RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
+    echo "Downloading MinIO for architecture: ${ARCH}" && \
+    wget -q https://dl.min.io/server/minio/release/linux-${ARCH}/minio -O /usr/local/bin/minio && \
+    chmod +x /usr/local/bin/minio && \
+    /usr/local/bin/minio --version
 
 WORKDIR /app
 
