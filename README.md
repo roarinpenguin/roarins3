@@ -83,22 +83,90 @@ Once you create a bucket, click **"Show S3 Access Info"** in the bucket detail p
 | `ROARINS3_SECRET_KEY` | (generated) | JWT signing key |
 | `ROARINS3_LOG_RETENTION_DAYS` | 90 | Days to retain audit logs |
 
-### Using with S3 Tools
+### Using with AWS CLI
+
+#### Step 1: Create API Key in RoarinS3
+
+1. Log into the RoarinS3 UI at `http://<HOST>:8080`
+2. Go to **API Keys** → **Create Key**
+3. Give it a name and select which buckets it can access
+4. **Important**: Copy both the **Access Key** and **Secret Key** - the secret is only shown once!
+
+#### Step 2: Configure AWS CLI
 
 ```bash
-# AWS CLI
-aws configure set aws_access_key_id <ACCESS_KEY>
-aws configure set aws_secret_access_key <SECRET_KEY>
-aws --endpoint-url http://localhost:9000 s3 ls
+aws configure
+```
 
-# Python boto3
+Enter the following when prompted:
+- **AWS Access Key ID**: Your RoarinS3 Access Key
+- **AWS Secret Access Key**: Your RoarinS3 Secret Key
+- **Default region name**: `us-east-1` (MinIO ignores this, but AWS CLI requires it)
+- **Default output format**: `json`
+
+#### Step 3: Use AWS CLI with MinIO Endpoint
+
+Every command needs the `--endpoint-url` parameter:
+
+```bash
+# List all buckets
+aws --endpoint-url http://<HOST>:9000 s3 ls
+
+# List objects in a bucket
+aws --endpoint-url http://<HOST>:9000 s3 ls s3://my-bucket
+
+# Upload a file
+aws --endpoint-url http://<HOST>:9000 s3 cp myfile.txt s3://my-bucket/
+
+# Upload a folder recursively
+aws --endpoint-url http://<HOST>:9000 s3 cp ./myfolder s3://my-bucket/myfolder --recursive
+
+# Download a file
+aws --endpoint-url http://<HOST>:9000 s3 cp s3://my-bucket/myfile.txt ./
+
+# Delete a file
+aws --endpoint-url http://<HOST>:9000 s3 rm s3://my-bucket/myfile.txt
+
+# Sync a local folder to bucket
+aws --endpoint-url http://<HOST>:9000 s3 sync ./local-folder s3://my-bucket/remote-folder
+```
+
+#### Quick Test (Using MinIO Root Credentials)
+
+For quick testing without creating API keys, use the MinIO root credentials:
+
+```bash
+aws configure
+# Access Key ID: minioadmin
+# Secret Access Key: minioadmin
+# Region: us-east-1
+# Output: json
+
+aws --endpoint-url http://localhost:9000 s3 ls
+```
+
+### Using with Python (boto3)
+
+```python
 import boto3
+
 s3 = boto3.client(
     's3',
-    endpoint_url='http://localhost:9000',
+    endpoint_url='http://<HOST>:9000',
     aws_access_key_id='<ACCESS_KEY>',
     aws_secret_access_key='<SECRET_KEY>'
 )
+
+# List buckets
+buckets = s3.list_buckets()
+for bucket in buckets['Buckets']:
+    print(bucket['Name'])
+
+# Upload a file
+s3.upload_file('local_file.txt', 'my-bucket', 'remote_file.txt')
+
+# Download a file
+s3.download_file('my-bucket', 'remote_file.txt', 'local_file.txt')
 ```
 
 ## Log Pull API
