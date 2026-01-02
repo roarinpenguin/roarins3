@@ -40,7 +40,7 @@ class Bucket(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     operation = Column(String(50), nullable=False, index=True)  # PUT, GET, DELETE, LIST, etc.
     bucket_name = Column(String(255), nullable=True, index=True)

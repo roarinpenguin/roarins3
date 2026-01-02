@@ -14,11 +14,13 @@ router = APIRouter(prefix="/api-keys", tags=["API Keys"])
 
 
 def generate_access_key() -> str:
-    return f"ROAK{secrets.token_hex(16).upper()}"
+    # MinIO requires access keys to be 3-20 characters
+    return f"ROAK{secrets.token_hex(8).upper()}"  # 4 + 16 = 20 chars
 
 
 def generate_secret_key() -> str:
-    return secrets.token_urlsafe(32)
+    # MinIO requires secret keys to be 8-40 characters
+    return secrets.token_urlsafe(30)[:40]  # Ensure max 40 chars
 
 
 @router.get("", response_model=List[APIKeyResponse])
