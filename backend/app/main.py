@@ -44,6 +44,38 @@ async def health_check():
     return {"status": "healthy", "service": "roarins3"}
 
 
+@app.get("/api/debug/test-audit")
+async def test_audit():
+    """Debug endpoint to test audit logging"""
+    from app.audit import AuditLogger
+    from app.database import async_session
+    from app.models import AuditLog
+    from sqlalchemy import select, func
+    
+    audit = AuditLogger()
+    audit.start_timer()
+    
+    # Try to create an audit log entry
+    result = await audit.log(
+        operation="TEST",
+        bucket_name="debug-test",
+        status_code=200,
+        success=True,
+        extra_data={"test": True}
+    )
+    
+    # Count existing audit logs
+    async with async_session() as db:
+        count_result = await db.execute(select(func.count(AuditLog.id)))
+        total_logs = count_result.scalar()
+    
+    return {
+        "audit_log_created": result is not None,
+        "audit_log_id": result.id if result else None,
+        "total_audit_logs": total_logs
+    }
+
+
 @app.get("/")
 async def root():
     return {

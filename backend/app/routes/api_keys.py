@@ -43,13 +43,10 @@ async def create_api_key(
     access_key = generate_access_key()
     secret_key = generate_secret_key()
     
-    # Create in MinIO first
+    # Try to create MinIO service account (non-blocking - log warning if fails)
     minio_created = minio_service.create_service_account(access_key, secret_key)
     if not minio_created:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create MinIO service account"
-        )
+        print(f"WARNING: Failed to create MinIO service account for {access_key}. Key will work for RoarinS3 API but not for direct S3 access.")
     
     api_key = APIKey(
         name=key_data.name,
