@@ -11,7 +11,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useState } from 'react';
-import api from '../api';
+import { auth } from '../api';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -53,7 +53,7 @@ export default function Layout({ onLogout }) {
     }
 
     try {
-      await api.auth.changePassword(currentPassword, newPassword);
+      await auth.changePassword(currentPassword, newPassword);
       setPasswordSuccess('Password changed successfully');
       setCurrentPassword('');
       setNewPassword('');
