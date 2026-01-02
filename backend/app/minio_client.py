@@ -6,12 +6,14 @@ from datetime import timedelta
 import io
 
 class MinioService:
-    _client = None
+    def __init__(self):
+        self._client = None
     
     @property
     def client(self):
         if self._client is None:
             settings = get_settings()
+            print(f"Initializing MinIO client: endpoint={settings.minio_endpoint}, user={settings.minio_access_key}")
             self._client = Minio(
                 settings.minio_endpoint,
                 access_key=settings.minio_access_key,
