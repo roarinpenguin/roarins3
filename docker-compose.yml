@@ -5,7 +5,7 @@ services:
     build: .
     container_name: roarins3
     ports:
-      - "80:80"       # Web UI and API
+      - "8080:80"     # Web UI and API
       - "9000:9000"   # MinIO S3 API
       - "9001:9001"   # MinIO Console (optional)
     volumes:
@@ -16,7 +16,7 @@ services:
       - ROARINS3_SECRET_KEY=change-this-in-production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/api/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
