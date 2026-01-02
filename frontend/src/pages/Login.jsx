@@ -101,8 +101,12 @@ export default function Login({ onLogin }) {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-purple-300">
-            Default credentials: <span className="text-purple-200">admin / admin</span>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-purple-400">
+            Crafted with <span className="text-purple-400">♡</span> by RoarinPenguin
           </p>
         </div>
       </div>
