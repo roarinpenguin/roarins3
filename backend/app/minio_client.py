@@ -4,6 +4,9 @@ from app.config import get_settings
 from typing import Optional, List, BinaryIO
 from datetime import timedelta
 import io
+import requests
+from requests_aws4auth import AWS4Auth
+import json
 
 class MinioService:
     def __init__(self):
@@ -204,6 +207,81 @@ class MinioService:
             return True
         except S3Error as e:
             raise Exception(f"Failed to set lifecycle: {e}")
+    
+    def create_service_account(self, access_key: str, secret_key: str) -> bool:
+        """Create a MinIO service account (access key) using admin API"""
+        settings = get_settings()
+        endpoint = settings.minio_endpoint
+        admin_access = settings.minio_access_key
+        admin_secret = settings.minio_secret_key
+        
+        # AWS4 authentication for MinIO admin API
+        auth = AWS4Auth(admin_access, admin_secret, 'us-east-1', 's3')
+        
+        url = f"http://{endpoint}/minio/admin/v3/add-service-account"
+        
+        # MinIO expects these fields for service account creation
+        payload = {
+            "accessKey": access_key,
+            "secretKey": secret_key,
+            "targetUser": admin_access,  # Create under the admin user
+            "policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": ["s3:*"],
+                        "Resource": ["arn:aws:s3:::*"]
+                    }
+                ]
+            }
+        }
+        
+        try:
+            response = requests.put(
+                url,
+                auth=auth,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=10
+            )
+            
+            if response.status_code in [200, 201]:
+                print(f"Created MinIO service account: {access_key}")
+                return True
+            else:
+                print(f"Failed to create MinIO service account: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"Error creating MinIO service account: {e}")
+            return False
+    
+    def delete_service_account(self, access_key: str) -> bool:
+        """Delete a MinIO service account using admin API"""
+        settings = get_settings()
+        endpoint = settings.minio_endpoint
+        admin_access = settings.minio_access_key
+        admin_secret = settings.minio_secret_key
+        
+        auth = AWS4Auth(admin_access, admin_secret, 'us-east-1', 's3')
+        url = f"http://{endpoint}/minio/admin/v3/delete-service-account?accessKey={access_key}"
+        
+        try:
+            response = requests.delete(
+                url,
+                auth=auth,
+                timeout=10
+            )
+            
+            if response.status_code in [200, 204]:
+                print(f"Deleted MinIO service account: {access_key}")
+                return True
+            else:
+                print(f"Failed to delete MinIO service account: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"Error deleting MinIO service account: {e}")
+            return False
 
 
 minio_service = MinioService()

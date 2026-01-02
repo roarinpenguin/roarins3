@@ -7,6 +7,7 @@ from app.database import get_db
 from app.schemas import APIKeyCreate, APIKeyResponse, APIKeyWithSecret, MessageResponse
 from app.models import APIKey, AdminUser
 from app.auth import get_current_user, get_password_hash
+from app.minio_client import minio_service
 
 router = APIRouter(prefix="/api-keys", tags=["API Keys"])
 
@@ -37,6 +38,14 @@ async def create_api_key(
 ):
     access_key = generate_access_key()
     secret_key = generate_secret_key()
+    
+    # Create in MinIO first
+    minio_created = minio_service.create_service_account(access_key, secret_key)
+    if not minio_created:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create MinIO service account"
+        )
     
     api_key = APIKey(
         name=key_data.name,
@@ -160,6 +169,9 @@ async def delete_api_key(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API Key not found"
         )
+    
+    # Delete from MinIO (best effort - don't fail if MinIO delete fails)
+    minio_service.delete_service_account(api_key.access_key)
     
     await db.delete(api_key)
     await db.commit()
