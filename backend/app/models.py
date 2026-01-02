@@ -54,7 +54,7 @@ class AuditLog(Base):
     status_code = Column(Integer, nullable=True)
     success = Column(Boolean, default=True)
     error_message = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)
     
     api_key_rel = relationship("APIKey", back_populates="audit_logs")
 

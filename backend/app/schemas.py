@@ -103,7 +103,7 @@ class AuditLogResponse(BaseModel):
     status_code: Optional[int]
     success: bool
     error_message: Optional[str]
-    metadata: Optional[dict]
+    extra_data: Optional[dict]
 
     class Config:
         from_attributes = True

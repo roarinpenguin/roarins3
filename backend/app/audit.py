@@ -32,7 +32,7 @@ class AuditLogger:
         status_code: Optional[int] = None,
         success: bool = True,
         error_message: Optional[str] = None,
-        metadata: Optional[dict] = None
+        extra_data: Optional[dict] = None
     ) -> AuditLog:
         log_entry = AuditLog(
             timestamp=datetime.utcnow(),
@@ -48,7 +48,7 @@ class AuditLogger:
             status_code=status_code,
             success=success,
             error_message=error_message,
-            metadata=metadata
+            extra_data=extra_data
         )
         
         db.add(log_entry)
