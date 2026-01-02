@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
@@ -7,6 +7,7 @@ from app.schemas import BucketCreate, BucketUpdate, BucketResponse, MessageRespo
 from app.models import Bucket, AdminUser
 from app.auth import get_current_user
 from app.minio_client import minio_service
+from app.audit import AuditLogger, get_client_ip, get_user_agent
 
 router = APIRouter(prefix="/buckets", tags=["Buckets"])
 
@@ -37,9 +38,12 @@ async def list_buckets(
 @router.post("", response_model=BucketResponse, status_code=status.HTTP_201_CREATED)
 async def create_bucket(
     bucket: BucketCreate,
+    request: Request,
     current_user: AdminUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    audit = AuditLogger()
+    audit.start_timer()
     # Check if bucket exists in DB
     result = await db.execute(select(Bucket).where(Bucket.name == bucket.name))
     if result.scalar_one_or_none():
@@ -78,6 +82,18 @@ async def create_bucket(
             minio_service.set_bucket_lifecycle(bucket.name, bucket.lifecycle_days)
     except Exception as e:
         pass  # Non-critical, log but continue
+    
+    # Log bucket creation
+    await audit.log(
+        db=db,
+        operation="CREATE_BUCKET",
+        bucket_name=bucket.name,
+        client_ip=get_client_ip(request),
+        user_agent=get_user_agent(request),
+        status_code=201,
+        success=True,
+        extra_data={"versioning": bucket.versioning_enabled, "quota": bucket.quota_bytes}
+    )
     
     return BucketResponse.model_validate(db_bucket)
 
@@ -149,10 +165,13 @@ async def update_bucket(
 @router.delete("/{bucket_name}", response_model=MessageResponse)
 async def delete_bucket(
     bucket_name: str,
+    request: Request,
     force: bool = False,
     current_user: AdminUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    audit = AuditLogger()
+    audit.start_timer()
     result = await db.execute(select(Bucket).where(Bucket.name == bucket_name))
     bucket = result.scalar_one_or_none()
     
@@ -174,5 +193,17 @@ async def delete_bucket(
     # Delete from DB
     await db.delete(bucket)
     await db.commit()
+    
+    # Log bucket deletion
+    await audit.log(
+        db=db,
+        operation="DELETE_BUCKET",
+        bucket_name=bucket_name,
+        client_ip=get_client_ip(request),
+        user_agent=get_user_agent(request),
+        status_code=200,
+        success=True,
+        extra_data={"force": force}
+    )
     
     return MessageResponse(message=f"Bucket '{bucket_name}' deleted successfully")

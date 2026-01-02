@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
@@ -8,6 +8,7 @@ from app.schemas import APIKeyCreate, APIKeyResponse, APIKeyWithSecret, MessageR
 from app.models import APIKey, AdminUser
 from app.auth import get_current_user, get_password_hash
 from app.minio_client import minio_service
+from app.audit import AuditLogger, get_client_ip, get_user_agent
 
 router = APIRouter(prefix="/api-keys", tags=["API Keys"])
 
@@ -33,9 +34,12 @@ async def list_api_keys(
 @router.post("", response_model=APIKeyWithSecret, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     key_data: APIKeyCreate,
+    request: Request,
     current_user: AdminUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    audit = AuditLogger()
+    audit.start_timer()
     access_key = generate_access_key()
     secret_key = generate_secret_key()
     
@@ -67,6 +71,17 @@ async def create_api_key(
         is_active=api_key.is_active,
         created_at=api_key.created_at,
         last_used=api_key.last_used
+    )
+    
+    # Log API key creation
+    await audit.log(
+        db=db,
+        operation="CREATE_API_KEY",
+        client_ip=get_client_ip(request),
+        user_agent=get_user_agent(request),
+        status_code=201,
+        success=True,
+        extra_data={"key_name": key_data.name, "permissions": key_data.permissions}
     )
     
     return response
@@ -158,9 +173,12 @@ async def activate_api_key(
 @router.delete("/{key_id}", response_model=MessageResponse)
 async def delete_api_key(
     key_id: str,
+    request: Request,
     current_user: AdminUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    audit = AuditLogger()
+    audit.start_timer()
     result = await db.execute(select(APIKey).where(APIKey.id == key_id))
     api_key = result.scalar_one_or_none()
     
@@ -175,5 +193,16 @@ async def delete_api_key(
     
     await db.delete(api_key)
     await db.commit()
+    
+    # Log API key deletion
+    await audit.log(
+        db=db,
+        operation="DELETE_API_KEY",
+        client_ip=get_client_ip(request),
+        user_agent=get_user_agent(request),
+        status_code=200,
+        success=True,
+        extra_data={"key_name": api_key.name}
+    )
     
     return MessageResponse(message="API Key deleted successfully")
